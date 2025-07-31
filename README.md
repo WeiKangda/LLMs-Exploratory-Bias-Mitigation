@@ -1,5 +1,7 @@
 # Gender Bias in Language Models Research
 
+This repository contains the implementation and resources for the paper: **"Mitigating Gender Bias via Fostering Exploratory Thinking in LLMs"** ([arXiv:2505.17217](https://arxiv.org/abs/2505.17217)).
+
 This repository contains research on gender bias in language models, including bias detection, mitigation techniques, and evaluation across multiple benchmarks.
 
 ## Project Structure
