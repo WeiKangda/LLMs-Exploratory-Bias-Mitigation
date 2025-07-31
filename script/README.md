@@ -22,7 +22,6 @@ Before using these scripts, you need to:
 - `evaluate_genmo_icl.slurm` - GenMO evaluation with ICL
 - `story_generation.slurm` - Story generation
 - `moral_stance_update.slurm` - Moral stance update
-- `moral_stance_update_mistral.slurm` - Moral stance update (Mistral)
 - `swap_explanation.slurm` - Swap and rewrite explanations
 
 ## Usage
