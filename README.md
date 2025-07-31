@@ -155,10 +155,50 @@ python StoryGeneration/filter.py --model mistral
 python StoryGeneration/moral_stance_update.py --model mistral
 ```
 
-#### Swap and Rewrite Explanations
+#### Swap and Rewrite Explanations (CDA Experiments)
 ```bash
+# Generate counterfactual data for CDA (Counterfactual Data Augmentation) experiments
 python StoryGeneration/swap_and_rewrite_explanations.py --input_file <input_file>
 ```
+
+This script performs counterfactual data augmentation by:
+1. **Loading story pairs** with male/female protagonists and their moral explanations
+2. **Swapping explanations** between male and female stories
+3. **Rewriting explanations** using Llama 3.1 to match character names and pronouns in the target story
+4. **Preserving moral reasoning** while only changing character-specific references
+5. **Saving results** with checkpointing for resuming interrupted runs
+
+**Command Line Arguments:**
+- `--model`: Model to use (choices: 'llama', 'mistral', default: 'mistral')
+- `--input_file`: Input file path (default: model-specific)
+- `--output_file`: Output file path (default: model-specific)
+- `--checkpoint_file`: Checkpoint file path for resuming (default: model-specific)
+- `--cache_dir`: Directory to cache models (default: './models')
+- `--checkpoint_interval`: Save checkpoint every N items (default: 10)
+- `--temperature`: Temperature for LLM generation (default: 0.7)
+
+**Usage Examples:**
+```bash
+# Basic usage with default settings
+python StoryGeneration/swap_and_rewrite_explanations.py
+
+# Use Llama model with custom input/output files
+python StoryGeneration/swap_and_rewrite_explanations.py --model llama --input_file ./my_data.jsonl --output_file ./my_output.jsonl
+
+# Adjust temperature and checkpoint interval
+python StoryGeneration/swap_and_rewrite_explanations.py --model mistral --temperature 0.5 --checkpoint_interval 5
+
+# Use custom cache directory
+python StoryGeneration/swap_and_rewrite_explanations.py --model llama --cache_dir ./my_models
+```
+
+**Output Format:**
+The script creates counterfactual data where:
+- Male stories get female explanations (rewritten to match male characters)
+- Female stories get male explanations (rewritten to match female characters)
+- Original explanations are preserved as `original_explanation`
+- Swapping source is tracked as `swapped_from`
+- Processing status and errors are logged
 
 #### Calculate Story Similarity
 ```bash
