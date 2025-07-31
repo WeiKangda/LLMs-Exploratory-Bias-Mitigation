@@ -17,12 +17,10 @@ This repository contains research on gender bias in language models, including b
 │   ├── fine_tune_cda.py # Counterfactual Data Augmentation
 │   └── resolution_analysis.py
 ├── StoryGeneration/     # Story generation and analysis
-│   ├── story_generation.py
-│   ├── story_generation_mistral.py
+│   ├── story_generation.py      # Combined script for Llama and Mistral models
+│   ├── moral_stance_update.py   # Combined script for moral stance updates
 │   ├── swap_and_rewrite_explanations.py
 │   ├── calculate_story_similarity.py
-│   ├── moral_stance_update.py
-│   ├── moral_stance_update_mistral.py
 │   ├── prompts.py
 │   ├── utils.py
 │   ├── filter.py
@@ -54,9 +52,94 @@ pip install -r requirements.txt
 
 ### Story Generation
 
-#### Generate Stories
+The story generation process consists of three sequential steps:
+
+#### Step 1: Generate Stories
 ```bash
-python StoryGeneration/story_generation.py --model_name <model_name>
+# Use Llama model (default)
+python StoryGeneration/story_generation.py
+
+# Use Mistral model
+python StoryGeneration/story_generation.py --model mistral
+
+# Generate 100 stories with Mistral
+python StoryGeneration/story_generation.py --model mistral --num_stories 100
+
+# Use custom cache and output directories
+python StoryGeneration/story_generation.py --model llama --cache_dir ./my_models --output_dir ./my_output
+
+# Enable debug output
+python StoryGeneration/story_generation.py --model mistral --debug
+
+# Generate stories without character names
+python StoryGeneration/story_generation.py --model llama --with_character False
+```
+
+**Command Line Arguments:**
+- `--model`: Model to use (choices: 'llama', 'mistral', default: 'llama')
+- `--num_stories`: Number of stories to generate (default: 50)
+- `--with_character`: Generate stories with character names (default: True)
+- `--debug`: Print debug information (default: False)
+- `--cache_dir`: Directory to cache models (default: './models')
+- `--output_dir`: Directory for output files (default: './StoryGeneration')
+
+#### Step 2: Filter Stories
+```bash
+# Filter stories for Llama model (default)
+python StoryGeneration/filter.py
+
+# Filter stories for Mistral model
+python StoryGeneration/filter.py --model mistral
+
+# Use custom input and output files
+python StoryGeneration/filter.py --model llama --input_file ./my_input.jsonl --output_file ./my_output.jsonl
+
+# Adjust ROUGE-1 thresholds and enable debug output
+python StoryGeneration/filter.py --model mistral --rouge1_lower 0.7 --rouge1_upper 0.9 --debug
+```
+
+**Command Line Arguments:**
+- `--model`: Model to use (choices: 'llama', 'mistral', default: 'llama')
+- `--input_file`: Input file path (default: model-specific)
+- `--output_file`: Output file path (default: model-specific)
+- `--rouge1_lower`: Lower threshold for ROUGE-1 score (default: 0.8)
+- `--rouge1_upper`: Upper threshold for ROUGE-1 score (default: 0.95)
+- `--debug`: Print debug information (default: False)
+
+#### Step 3: Update Moral Stances
+```bash
+# Update moral stances for Llama model (default)
+python StoryGeneration/moral_stance_update.py
+
+# Update moral stances for Mistral model
+python StoryGeneration/moral_stance_update.py --model mistral
+
+# Use custom input and output files
+python StoryGeneration/moral_stance_update.py --model llama --input_file ./my_input.jsonl --output_file ./my_output.jsonl
+
+# Adjust temperature and enable debug output
+python StoryGeneration/moral_stance_update.py --model mistral --temperature 0.5 --debug
+```
+
+**Command Line Arguments:**
+- `--model`: Model to use (choices: 'llama', 'mistral', default: 'llama')
+- `--cache_dir`: Directory to cache models (default: './models')
+- `--input_file`: Input file path (default: model-specific)
+- `--output_file`: Output file path (default: model-specific)
+- `--temperature`: Temperature for generation (default: 0.7)
+- `--debug`: Print debug information (default: False)
+
+#### Complete Pipeline Example
+```bash
+# Complete pipeline for Llama model
+python StoryGeneration/story_generation.py --model llama --num_stories 50
+python StoryGeneration/filter.py --model llama
+python StoryGeneration/moral_stance_update.py --model llama
+
+# Complete pipeline for Mistral model
+python StoryGeneration/story_generation.py --model mistral --num_stories 50
+python StoryGeneration/filter.py --model mistral
+python StoryGeneration/moral_stance_update.py --model mistral
 ```
 
 #### Swap and Rewrite Explanations
