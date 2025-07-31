@@ -24,7 +24,6 @@ Before using these scripts, you need to:
 - `moral_stance_update.slurm` - Moral stance update
 - `moral_stance_update_mistral.slurm` - Moral stance update (Mistral)
 - `swap_explanation.slurm` - Swap and rewrite explanations
-- `draw_weight_change_plot.slurm` - Generate weight change plots
 
 ## Usage
 
