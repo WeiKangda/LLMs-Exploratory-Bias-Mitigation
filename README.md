@@ -39,12 +39,25 @@ git clone https://github.com/WeiKangda/LLMs-Exploratory-Bias-Mitigation.git
 cd LLMs-Exploratory-Bias-Mitigation
 ```
 
-2. Install dependencies:
+2. Create and activate a virtual environment:
+```bash
+# Using venv (recommended)
+python -m venv genderbias_env
+source genderbias_env/bin/activate  # On macOS/Linux
+# or
+genderbias_env\Scripts\activate     # On Windows
+
+# Alternative: Using conda
+conda create -n genderbias_env python=3.9
+conda activate genderbias_env
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Important**: If you plan to use the Slurm scripts, you'll need to:
+4. **Important**: If you plan to use the Slurm scripts, you'll need to:
    - Get a Hugging Face access token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
    - Replace `YOUR_HUGGINGFACE_TOKEN_HERE` in the slurm script files with your actual token
 

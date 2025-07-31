@@ -10,7 +10,7 @@
 #SBATCH --partition=gpu              #Request the GPU partition/queue
 
 #First Executable Line
-conda activate INL
+conda activate genderbias_env
 module load WebProxy/0000
 huggingface-cli login --token YOUR_HUGGINGFACE_TOKEN_HERE
 CUDA_VISIBLE_DEVICES=0 python StoryGeneration/swap_and_rewrite_explanations.py

@@ -13,7 +13,7 @@
 module load WebProxy/0000
 
 # Activate conda environment
-conda activate INL
+conda activate genderbias_env
 
 # Login to Hugging Face
 huggingface-cli login --token YOUR_HUGGINGFACE_TOKEN_HERE

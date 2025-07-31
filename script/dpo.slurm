@@ -10,7 +10,7 @@
 #SBATCH --partition=gpu              #Request the GPU partition/queue
 
 #First Executable Line
-conda activate INL
+conda activate genderbias_env
 module load WebProxy/0000
 huggingface-cli login --token YOUR_HUGGINGFACE_TOKEN_HERE
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True CUDA_VISIBLE_DEVICES=0 python GenderBiasMitigation/dpo.py --model_name meta-llama/Llama-3.1-8B-Instruct --max_examples 125
