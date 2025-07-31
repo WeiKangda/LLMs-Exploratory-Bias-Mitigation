@@ -5,9 +5,12 @@ import torch
 import random
 import time
 import numpy as np
+import argparse
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
-sys.path.append(os.path.abspath('/scratch/user/u.kw178339/GenderBias'))
+
+# Add the project path to sys.path
+sys.path.append(os.path.abspath('.'))
 from StoryGeneration.utils import get_stance, extract_info, extract_stance_and_explanation, append_to_jsonl, write_to_jsonl, extract_info_with_character
 from StoryGeneration.prompts import *
 
@@ -40,7 +43,7 @@ def generate_story(model, tokenizer, prompt, temperature=1.0):
     response = tokenizer.decode(output[0][prompt_length:], skip_special_tokens=True)
     return response
 
-def validate_story(model, tokenizer, prompt, temperature=0.1):
+def validate_story(model, tokenizer, prompt, temperature=0.1, do_sample=False):
     msgs = [
         {
             "role": "system",
@@ -62,33 +65,84 @@ def validate_story(model, tokenizer, prompt, temperature=0.1):
     output = model.generate(
         input_ids=input_ids,
         max_new_tokens=256,
-        #temperature=temperature,
-        do_sample=False,
+        temperature=temperature,
+        do_sample=do_sample,
     )
 
     prompt_length = input_ids.shape[1]
     response = tokenizer.decode(output[0][prompt_length:], skip_special_tokens=True)
     return response
 
-if __name__ == "__main__":
-    with_character = True
-    number_of_stories = 50
-    model_name = "meta-llama/Llama-3.1-8B-Instruct"
-    print(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir="/scratch/user/u.kw178339/huggingface_models")
+def get_model_config(model_name):
+    """Return model-specific configuration parameters"""
+    configs = {
+        "llama": {
+            "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+            "cache_dir": "./models",
+            "validation_temp": 0.1,
+            "validation_do_sample": False,
+            "output_file": "./StoryGeneration/generated_story_llama.jsonl",
+            "sys_path": "."
+        },
+        "mistral": {
+            "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
+            "cache_dir": "./models",
+            "validation_temp": 0.1,
+            "validation_do_sample": False,
+            "output_file": "./StoryGeneration/generated_story_mistral.jsonl",
+            "sys_path": "."
+        }
+    }
+    return configs.get(model_name.lower(), configs["llama"])
+
+def main():
+    parser = argparse.ArgumentParser(description='Generate stories with different models')
+    parser.add_argument('--model', type=str, default='llama', choices=['llama', 'mistral'],
+                       help='Model to use for story generation (default: llama)')
+    parser.add_argument('--num_stories', type=int, default=50,
+                       help='Number of stories to generate (default: 50)')
+    parser.add_argument('--with_character', action='store_true', default=True,
+                       help='Generate stories with character names (default: True)')
+    parser.add_argument('--debug', action='store_true', default=False,
+                       help='Print debug information (default: False)')
+    parser.add_argument('--cache_dir', type=str, default='./models',
+                       help='Directory to cache models (default: ./models)')
+    parser.add_argument('--output_dir', type=str, default='./StoryGeneration',
+                       help='Directory for output files (default: ./StoryGeneration)')
+    
+    args = parser.parse_args()
+    
+    # Get model configuration
+    config = get_model_config(args.model)
+    
+    # Update cache directory and output file with user-provided paths
+    config["cache_dir"] = args.cache_dir
+    config["output_file"] = os.path.join(args.output_dir, f"generated_story_{args.model}.jsonl")
+    
+    # Update sys.path if needed
+    if config["sys_path"] not in sys.path:
+        sys.path.append(os.path.abspath(config["sys_path"]))
+    
+    print(f"Using model: {config['model_name']}")
+    print(f"Number of stories: {args.num_stories}")
+    print(f"With character: {args.with_character}")
+    print(f"Cache directory: {config['cache_dir']}")
+    print(f"Output file: {config['output_file']}")
+    
+    # Load model and tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(config["model_name"], cache_dir=config["cache_dir"])
     tokenizer.pad_token_id = tokenizer.eos_token_id
-    model = AutoModelForCausalLM.from_pretrained(model_name, pad_token_id=tokenizer.eos_token_id, cache_dir="/scratch/user/u.kw178339/huggingface_models")
+    model = AutoModelForCausalLM.from_pretrained(config["model_name"], pad_token_id=tokenizer.eos_token_id, cache_dir=config["cache_dir"])
     model = model.to("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
 
-    output_file = "./StoryGeneration/generated_story.jsonl"
+    output_file = config["output_file"]
     stories = []
-
     iteration = 0
     iterations = []
-
     time_taken = []
-    if with_character:
+    
+    if args.with_character:
         # Generate a random number between 0, 1, 2, and 3
         random_number = random.randint(0, 0)
         # Assign corresponding variable to "prompt"
@@ -105,13 +159,14 @@ if __name__ == "__main__":
             print("Using story 3 as example.")
             prompt = story_generation_prompt_one_shot_3_with_character
             
-        while len(stories) < number_of_stories:
+        while len(stories) < args.num_stories:
             start_time = time.time()  # Start timing
             print("#" * 30)
             iteration += 1
             print(f"Iter {iteration}")
             response = generate_story(model, tokenizer, prompt)
-            #print(response)
+            if args.debug:
+                print(response)
 
             try:
                 # Attempt to access a subscriptable element
@@ -143,7 +198,9 @@ if __name__ == "__main__":
             STANCE: [Moral/Immoral/Both]
             EXPLANATION: [Brief explanation justifying the stance]"""
 
-            male_validation = validate_story(model, tokenizer, male_story + question)
+            male_validation = validate_story(model, tokenizer, male_story + question, 
+                                           temperature=config["validation_temp"], 
+                                           do_sample=config["validation_do_sample"])
             print(male_validation)
             male_stance, male_explanation = extract_stance_and_explanation(male_validation)
             male_stance = get_stance(male_stance)
@@ -160,7 +217,9 @@ if __name__ == "__main__":
             STANCE: [Moral/Immoral/Both]
             EXPLANATION: [Brief explanation justifying the stance]"""
 
-            female_validation = validate_story(model, tokenizer, female_story + question)
+            female_validation = validate_story(model, tokenizer, female_story + question,
+                                             temperature=config["validation_temp"],
+                                             do_sample=config["validation_do_sample"])
             print(female_validation)
             female_stance, female_explanation = extract_stance_and_explanation(female_validation)
             female_stance = get_stance(female_stance)
@@ -218,13 +277,14 @@ if __name__ == "__main__":
             print("Using story 3 as example.")
             prompt = story_generation_prompt_one_shot_3
     
-        while len(stories) < number_of_stories:
+        while len(stories) < args.num_stories:
             start_time = time.time()  # Start timing
             print("#" * 30)
             iteration += 1
             print(f"Iter {iteration}")
             response = generate_story(model, tokenizer, prompt)
-            #print(response)
+            if args.debug:
+                print(response)
 
             try:
                 # Attempt to access a subscriptable element
@@ -244,7 +304,9 @@ if __name__ == "__main__":
             print(f"Male Story: {male_story}\n")
             print(f"Female Story: {female_story}\n")
 
-            male_validation = validate_story(model, tokenizer, male_story + question)
+            male_validation = validate_story(model, tokenizer, male_story + question,
+                                           temperature=config["validation_temp"],
+                                           do_sample=config["validation_do_sample"])
             male_stance, male_explanation = extract_stance_and_explanation(male_validation)
             male_stance = get_stance(male_stance)
             story["male"]["stance"] = male_stance
@@ -252,7 +314,9 @@ if __name__ == "__main__":
             print(f"Male Stance: {male_stance}\n")
             print(f"Male Explanation: {male_explanation.strip()}\n")
             
-            female_validation = validate_story(model, tokenizer, female_story + question)
+            female_validation = validate_story(model, tokenizer, female_story + question,
+                                             temperature=config["validation_temp"],
+                                             do_sample=config["validation_do_sample"])
             female_stance, female_explanation = extract_stance_and_explanation(female_validation)
             female_stance = get_stance(female_stance)
             story["female"]["stance"] = female_stance
@@ -288,3 +352,6 @@ if __name__ == "__main__":
     #write_to_jsonl(stories, output_file)
     print(f"Average iteration to generate a valid story: {np.mean(iterations)}")
     print(f"Average time to generate a valid story: {np.mean(time_taken):.2f} minutes")
+
+if __name__ == "__main__":
+    main() 

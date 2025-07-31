@@ -37,8 +37,8 @@ This repository contains research on gender bias in language models, including b
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd GenderBias
+git clone https://github.com/WeiKangda/LLMs-Exploratory-Bias-Mitigation.git
+cd LLMs-Exploratory-Bias-Mitigation
 ```
 
 2. Install dependencies:
@@ -128,11 +128,14 @@ The data files contain the research datasets used for gender bias analysis and s
 If you use this code in your research, please cite:
 
 ```bibtex
-@article{genderbias2024,
-  title={Gender Bias in Language Models: Detection and Mitigation},
-  author={Your Name},
-  journal={arXiv preprint},
-  year={2024}
+@misc{wei2025mitigatinggenderbiasfostering,
+      title={Mitigating Gender Bias via Fostering Exploratory Thinking in LLMs}, 
+      author={Kangda Wei and Hasnat Md Abdullah and Ruihong Huang},
+      year={2025},
+      eprint={2505.17217},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2505.17217}, 
 }
 ```
 
@@ -150,4 +153,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-For questions or issues, please open an issue on GitHub or contact the authors. 
+For questions or issues, please open an issue on GitHub or contact the authors at kangda@tamu.edu. 
