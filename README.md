@@ -24,9 +24,9 @@ This repository contains research on gender bias in language models, including b
 │   ├── prompts.py
 │   ├── utils.py
 │   ├── filter.py
-│   ├── generated_data.jsonl
+│   ├── generated_data_llama.jsonl
 │   ├── generated_data_mistral.jsonl
-│   ├── swapped_explanations.jsonl
+│   ├── swapped_explanations_llama.jsonl
 │   └── swapped_explanations_mistral.jsonl
 └── script/              # Slurm scripts for HPC
 ```
