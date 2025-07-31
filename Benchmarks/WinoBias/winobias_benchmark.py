@@ -1,25 +1,44 @@
-from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import argparse
+import os
+import re
 import torch
-from sklearn.metrics import f1_score
 import numpy as np
 from tqdm import tqdm
-import re
-import argparse
-from collections import defaultdict
+from sklearn.metrics import f1_score
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from datasets import load_dataset
 from datetime import datetime
-import os
+from collections import defaultdict
 
-def load_model_and_tokenizer(model_name="meta-llama/Llama-3.1-8B-Instruct"):
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='WinoBias benchmark evaluation')
+    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-3.1-8B-Instruct',
+                       help='Model name to use for evaluation')
+    parser.add_argument('--cache_dir', type=str, default='./models',
+                       help='Directory to cache models (default: ./models)')
+    parser.add_argument('--dataset_cache_dir', type=str, default='./datasets',
+                       help='Directory to cache datasets (default: ./datasets)')
+    parser.add_argument('--output_dir', type=str, default='./results',
+                       help='Output directory for results (default: ./results)')
+    parser.add_argument('--split', type=str, default='test',
+                       help='Dataset split to use (default: test)')
+    parser.add_argument('--batch_size', type=int, default=8,
+                       help='Batch size for evaluation (default: 8)')
+    parser.add_argument('--num_samples', type=int, default=None,
+                       help='Number of samples to evaluate (default: all)')
+    return parser.parse_args()
+
+def load_model_and_tokenizer(model_name="meta-llama/Llama-3.1-8B-Instruct", cache_dir="./models"):
     """Load Llama model and tokenizer."""
-    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir="/scratch/user/u.kw178339/huggingface_models")
+    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = 'left'  # Set padding to left for decoder-only models
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16,
         device_map="auto",
-        cache_dir="/scratch/user/u.kw178339/huggingface_models"
+        cache_dir=cache_dir
     )
     return model, tokenizer
 
@@ -199,38 +218,26 @@ def write_results_to_file(results, model_name, split, output_dir="results"):
     return filename
 
 def main():
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Evaluate LLM on Winobias dataset')
-    parser.add_argument('--model_name', type=str, default="meta-llama/Llama-3.1-8B-Instruct",
-                      help='Hugging Face model name to use')
-    parser.add_argument('--num_samples', type=int, default=None,
-                      help='Number of samples to evaluate')
-    parser.add_argument('--output_dir', type=str, default="results",
-                      help='Directory to save results')
-    parser.add_argument('--batch_size', type=int, default=8,
-                      help='Batch size for processing')
-    parser.add_argument('--split', type=str, default="train",
-                      help='Dataset split to use (train/test)')
-    args = parser.parse_args()
+    args = parse_args()
     
     # Load dataset
     print("Loading dataset...")
-    dataset = load_dataset("Elfsong/Wino_Bias", split=args.split, cache_dir="/scratch/user/u.kw178339/huggingface_datasets")
+    dataset = load_dataset("Elfsong/Wino_Bias", split=args.split, cache_dir=args.dataset_cache_dir)
     
     # Load model and tokenizer
     print(f"Loading model and tokenizer for {args.model_name}...")
-    model, tokenizer = load_model_and_tokenizer(args.model_name)
+    model, tokenizer = load_model_and_tokenizer(args.model_name, args.cache_dir)
     
     # Evaluate predictions
     print("Evaluating predictions...")
     results = evaluate_predictions(dataset, model, tokenizer, num_samples=args.num_samples, batch_size=args.batch_size)
     
-    # Print results to console
-    print("\nResults:")
-    print(f"Model: {args.model_name}")
+    # Write results to file
+    print("Writing results to file...")
+    write_results_to_file(results, args.model_name, args.split, args.output_dir)
     
-    # Print overall metrics
-    print("\nOverall Metrics:")
+    print("Evaluation complete!")
+    print(f"Results saved to: {args.output_dir}")
     print(f"F1 Score: {results['overall']['f1_score']:.4f}")
     print(f"Accuracy: {results['overall']['accuracy']:.4f}")
     print(f"Number of samples: {results['overall']['num_samples']}")
@@ -242,9 +249,6 @@ def main():
         print(f"F1 Score: {metrics['f1_score']:.4f}")
         print(f"Accuracy: {metrics['accuracy']:.4f}")
         print(f"Number of samples: {metrics['num_samples']}")
-    
-    # Write results to file
-    results_file = write_results_to_file(results, args.model_name, args.split, args.output_dir)
 
 if __name__ == "__main__":
     main()

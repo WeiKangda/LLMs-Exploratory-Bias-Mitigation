@@ -81,7 +81,7 @@ def get_model_config(model_name):
             "cache_dir": "./models",
             "validation_temp": 0.1,
             "validation_do_sample": False,
-            "output_file": "./StoryGeneration/generated_story_llama.jsonl",
+            "output_file": "StoryGeneration/generated_story_llama.jsonl",
             "sys_path": "."
         },
         "mistral": {
@@ -89,7 +89,7 @@ def get_model_config(model_name):
             "cache_dir": "./models",
             "validation_temp": 0.1,
             "validation_do_sample": False,
-            "output_file": "./StoryGeneration/generated_story_mistral.jsonl",
+            "output_file": "StoryGeneration/generated_story_mistral.jsonl",
             "sys_path": "."
         }
     }
@@ -107,8 +107,8 @@ def main():
                        help='Print debug information (default: False)')
     parser.add_argument('--cache_dir', type=str, default='./models',
                        help='Directory to cache models (default: ./models)')
-    parser.add_argument('--output_dir', type=str, default='./StoryGeneration',
-                       help='Directory for output files (default: ./StoryGeneration)')
+    parser.add_argument('--output_dir', type=str, default='StoryGeneration',
+                       help='Directory for output files (default: StoryGeneration)')
     
     args = parser.parse_args()
     
@@ -262,7 +262,7 @@ def main():
             EXPLANATION: [Brief explanation justifying the stance]"""
 
         # Generate a random number between 0, 1, 2, and 3
-        random_number = random.randint(0, 3)
+        random_number = random.randint(0, 0)
         # Assign corresponding variable to "prompt"
         if random_number == 0:
             print("Using no example.")
@@ -334,7 +334,7 @@ def main():
                 append_to_jsonl(story, output_file)
 
                 # Generate a random number between 0, 1, 2, and 3
-                random_number = random.randint(0, 3)
+                random_number = random.randint(0, 0)
                 # Assign corresponding variable to "prompt"
                 if random_number == 0:
                     print("Using no example.")

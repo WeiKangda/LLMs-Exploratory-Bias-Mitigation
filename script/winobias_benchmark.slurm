@@ -1,25 +1,16 @@
 #!/bin/bash
 
-#SBATCH --job-name=Winobias_Benchmark       # Job name
-#SBATCH --time=01:00:00                 # Maximum runtime of 48 hours
-#SBATCH --ntasks=1                      # Number of tasks
-#SBATCH --mem=16G                       # Request 16GB of memory
-#SBATCH --output=logs/winobias_benchmark.%j.out  # Output file
-#SBATCH --error=logs/winobias_benchmark.%j.err   # Error file
-#SBATCH --gres=gpu:h100:1               # Request 1 H100 GPU
-#SBATCH --partition=gpu                 # GPU partition
+##NECESSARY JOB SPECIFICATIONS
+#SBATCH --job-name=winobias_benchmark       #Set the job name to "winobias_benchmark"
+#SBATCH --time=2:00:00              #Set the wall clock limit to 2 hours
+#SBATCH --ntasks=1                   #Request 1 task
+#SBATCH --mem=32G                  #Request 32GB per node
+#SBATCH --output=winobias_benchmark.%j      #Send stdout/err to "winobias_benchmark.[jobID]"
+#SBATCH --gres=gpu:h100:1                 #Request 1 GPU per node can be 1 or 2
+#SBATCH --partition=gpu              #Request the GPU partition/queue
 
-# Load necessary modules
-module load WebProxy/0000
-
-# Activate conda environment
+#First Executable Line
 conda activate INL
-
-# Login to Hugging Face
+module load WebProxy/0000
 huggingface-cli login --token YOUR_HUGGINGFACE_TOKEN_HERE
-
-# Navigate to project directory
-cd /scratch/user/u.kw178339/GenderBias
-
-# Run the MMLU benchmark
-CUDA_VISIBLE_DEVICES=0 python GenMO/winobias_benchmark.py --model_name Mistral-7B-Instruct-v0.3-cda-finetuned-max_examples_5000_sources_0 --split test
+CUDA_VISIBLE_DEVICES=0 python Benchmarks/WinoBias/winobias_benchmark.py --model_name meta-llama/Llama-3.1-8B-Instruct

@@ -71,7 +71,7 @@ python StoryGeneration/story_generation.py --model llama --cache_dir ./my_models
 # Enable debug output
 python StoryGeneration/story_generation.py --model mistral --debug
 
-# Generate stories without character names
+# Generate stories without character names (Not Recommended. Results reported in paper used pormpts include character names. )
 python StoryGeneration/story_generation.py --model llama --with_character False
 ```
 

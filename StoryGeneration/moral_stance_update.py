@@ -70,14 +70,14 @@ def get_model_config(model_name):
         "llama": {
             "model_name": "meta-llama/Llama-3.1-8B-Instruct",
             "cache_dir": "./models",
-            "input_file": "./StoryGeneration/generated_story_filtered_llama.jsonl",
-            "output_file": "./StoryGeneration/generated_data_llama.jsonl"
+            "input_file": "StoryGeneration/generated_story_filtered_llama.jsonl",
+            "output_file": "StoryGeneration/generated_data_llama.jsonl"
         },
         "mistral": {
             "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
             "cache_dir": "./models",
-            "input_file": "./StoryGeneration/generated_story_filtered_mistral.jsonl",
-            "output_file": "./StoryGeneration/generated_data_mistral.jsonl"
+            "input_file": "StoryGeneration/generated_story_filtered_mistral.jsonl",
+            "output_file": "StoryGeneration/generated_data_mistral.jsonl"
         }
     }
     return configs.get(model_name.lower(), configs["llama"])

@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+
 """
-Script to swap male and female explanations and rewrite them to match story characters.
+Script to swap male and female explanations and rewrite them to match story characters for CDA experiments.
 
 This script:
 1. Loads data from a JSONL file containing male/female story pairs with explanations
@@ -16,6 +16,7 @@ import re
 import os
 import sys
 import torch
+import argparse
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Dict, List, Tuple, Optional
@@ -238,7 +239,8 @@ def rewrite_explanation_with_llm(model, tokenizer, original_story: str, target_s
 
 def swap_and_rewrite_explanations(data: List[Dict], model, tokenizer, 
                                  checkpoint_interval: int = 10, 
-                                 checkpoint_file: str = "StoryGeneration/checkpoint.jsonl") -> List[Dict]:
+                                 checkpoint_file: str = "checkpoint.jsonl",
+                                 temperature: float = 0.7) -> List[Dict]:
     """Swap explanations between male and female stories and rewrite them."""
     
     # Load checkpoint if exists
@@ -269,12 +271,12 @@ def swap_and_rewrite_explanations(data: List[Dict], model, tokenizer,
             print(f"\nProcessing item {current_index+1}/{len(data)}")
             print("Rewriting male explanation...")
             rewritten_male_explanation = rewrite_explanation_with_llm(
-                model, tokenizer, female_story, male_story, swapped_male_explanation
+                model, tokenizer, female_story, male_story, swapped_male_explanation, temperature
             )
             
             print("Rewriting female explanation...")
             rewritten_female_explanation = rewrite_explanation_with_llm(
-                model, tokenizer, male_story, female_story, swapped_female_explanation
+                model, tokenizer, male_story, female_story, swapped_female_explanation, temperature
             )
             
             # Create new item with swapped and rewritten explanations
@@ -359,15 +361,69 @@ def swap_and_rewrite_explanations(data: List[Dict], model, tokenizer,
     
     return processed_data
 
+def get_model_config(model_name: str) -> Dict:
+    """Get model configuration based on model name."""
+    configs = {
+        "llama": {
+            "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+            "cache_dir": "./models",
+            "input_file": "StoryGeneration/generated_data_llama.jsonl",
+            "output_file": "StoryGeneration/swapped_explanations_llama.jsonl",
+            "checkpoint_file": "StoryGeneration/checkpoint_llama.jsonl"
+        },
+        "mistral": {
+            "model_name": "meta-llama/Llama-3.1-8B-Instruct",  # Using Llama for rewriting
+            "cache_dir": "./models",
+            "input_file": "StoryGeneration/generated_data_mistral.jsonl",
+            "output_file": "StoryGeneration/swapped_explanations_mistral.jsonl",
+            "checkpoint_file": "StoryGeneration/checkpoint_mistral.jsonl"
+        }
+    }
+    return configs.get(model_name.lower(), configs["llama"])
+
 def main():
     """Main function to run the script."""
     
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Swap and rewrite explanations between male and female stories')
+    parser.add_argument('--model', type=str, default='mistral', choices=['llama', 'mistral'],
+                       help='Model to use for processing (default: mistral)')
+    parser.add_argument('--input_file', type=str, default=None,
+                       help='Input file path (default: model-specific)')
+    parser.add_argument('--output_file', type=str, default=None,
+                       help='Output file path (default: model-specific)')
+    parser.add_argument('--checkpoint_file', type=str, default=None,
+                       help='Checkpoint file path (default: model-specific)')
+    parser.add_argument('--cache_dir', type=str, default=None,
+                       help='Directory to cache models (default: model-specific)')
+    parser.add_argument('--checkpoint_interval', type=int, default=10,
+                       help='Save checkpoint every N items (default: 10)')
+    parser.add_argument('--temperature', type=float, default=0.7,
+                       help='Temperature for LLM generation (default: 0.7)')
+    
+    args = parser.parse_args()
+    
+    # Get model configuration
+    config = get_model_config(args.model)
+    
+    # Update paths with user-provided values if specified
+    if args.input_file:
+        config["input_file"] = args.input_file
+    if args.output_file:
+        config["output_file"] = args.output_file
+    if args.checkpoint_file:
+        config["checkpoint_file"] = args.checkpoint_file
+    if args.cache_dir:
+        config["cache_dir"] = args.cache_dir
+    
     # Configuration
-    input_file = "StoryGeneration/generated_data_mistral.jsonl"
-    output_file = "StoryGeneration/swapped_explanations_mistral.jsonl"
-    checkpoint_file = "StoryGeneration/checkpoint_mistral.jsonl"
-    model_name = "meta-llama/Llama-3.1-8B-Instruct"
-    checkpoint_interval = 10  # Save checkpoint every 10 items
+    input_file = config["input_file"]
+    output_file = config["output_file"]
+    checkpoint_file = config["checkpoint_file"]
+    model_name = config["model_name"]
+    cache_dir = config["cache_dir"]
+    checkpoint_interval = args.checkpoint_interval
+    temperature = args.temperature
     
     # Check if input file exists
     if not os.path.exists(input_file):
@@ -388,14 +444,14 @@ def main():
     # Load model and tokenizer
     print(f"Loading model {model_name}...")
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir="/scratch/user/u.kw178339/huggingface_models")
+        tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
         tokenizer.pad_token_id = tokenizer.eos_token_id
         
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch.float16,
             device_map="auto",
-            cache_dir="/scratch/user/u.kw178339/huggingface_models"
+            cache_dir=cache_dir
         )
         model.eval()
         print("✓ Model loaded successfully")
@@ -409,11 +465,13 @@ def main():
     print("Starting explanation swap and rewrite process...")
     print(f"Checkpoint interval: every {checkpoint_interval} items")
     print(f"Checkpoint file: {checkpoint_file}")
+    print(f"Temperature: {temperature}")
     
     processed_data = swap_and_rewrite_explanations(
         data, model, tokenizer, 
         checkpoint_interval=checkpoint_interval,
-        checkpoint_file=checkpoint_file
+        checkpoint_file=checkpoint_file,
+        temperature=temperature
     )
     
     # Save final results
@@ -435,7 +493,9 @@ def main():
     print(f"Checkpoint file: {checkpoint_file}")
     print(f"Total story pairs processed: {len(processed_data)}")
     print(f"Model used: {model_name}")
+    print(f"Cache directory: {cache_dir}")
     print(f"Checkpoint interval: every {checkpoint_interval} items")
+    print(f"Temperature: {temperature}")
     print("="*50)
 
 if __name__ == "__main__":

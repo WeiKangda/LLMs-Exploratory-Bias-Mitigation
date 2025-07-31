@@ -63,12 +63,12 @@ def get_model_config(model_name):
     """Return model-specific configuration parameters"""
     configs = {
         "llama": {
-            "input_file": "./StoryGeneration/generated_story_llama.jsonl",
-            "output_file": "./StoryGeneration/generated_story_filtered_llama.jsonl"
+            "input_file": "StoryGeneration/generated_story_llama.jsonl",
+            "output_file": "StoryGeneration/generated_story_filtered_llama.jsonl"
         },
         "mistral": {
-            "input_file": "./StoryGeneration/generated_story_mistral.jsonl",
-            "output_file": "./StoryGeneration/generated_story_filtered_mistral.jsonl"
+            "input_file": "StoryGeneration/generated_story_mistral.jsonl",
+            "output_file": "StoryGeneration/generated_story_filtered_mistral.jsonl"
         }
     }
     return configs.get(model_name.lower(), configs["llama"])

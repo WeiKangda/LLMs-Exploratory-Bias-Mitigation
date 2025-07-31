@@ -9,12 +9,18 @@ import os
 from datetime import datetime
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="meta-llama/Llama-3.1-8B-Instruct",
-                       help="Name of the model to use for DPO training")
-    parser.add_argument("--max_examples", type=int, default=None,
-                       help="Maximum number of examples to load from the dataset")
-    
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='DPO training with grid search')
+    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-3.1-8B-Instruct',
+                       help='Model name to use for training')
+    parser.add_argument('--max_examples', type=int, default=125,
+                       help='Maximum number of examples to use')
+    parser.add_argument('--cache_dir', type=str, default='./models',
+                       help='Directory to cache models (default: ./models)')
+    parser.add_argument('--dataset_path', type=str, default=None,
+                       help='Path to dataset file (default: auto-determined based on model)')
+    parser.add_argument('--output_dir', type=str, default='./dpo_results',
+                       help='Output directory for results (default: ./dpo_results)')
     return parser.parse_args()
 
 # === Load and preprocess dataset for DPO ===
@@ -276,9 +282,9 @@ if __name__ == "__main__":
     # === Load tokenizer and model ===
     model_name = args.model_name
     model_name_short = model_name.split("/")[-1].lower()
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir="/scratch/user/u.kw178339/huggingface_models")
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, cache_dir=args.cache_dir)
     tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", cache_dir="/scratch/user/u.kw178339/huggingface_models")
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", cache_dir=args.cache_dir)
 
     # === Apply LoRA ===
     lora_config = LoraConfig(
@@ -292,12 +298,14 @@ if __name__ == "__main__":
     model = get_peft_model(model, lora_config)
 
     # === Load and tokenize dataset ===
-    if model_name == "mistralai/Mistral-7B-Instruct-v0.3":
-        dataset_path = "/scratch/user/u.kw178339/GenderBias/StoryGeneration/generated_data_mistral.jsonl"
+    if args.dataset_path:
+        dataset_path = args.dataset_path
+    elif model_name == "mistralai/Mistral-7B-Instruct-v0.3":
+        dataset_path = "StoryGeneration/generated_data_mistral.jsonl"
     else:
-        dataset_path = "/scratch/user/u.kw178339/GenderBias/StoryGeneration/generated_data.jsonl"
+        dataset_path = "StoryGeneration/generated_data_llama.jsonl"
     print(dataset_path)
-    output_dir = f"./{model_name_short}_grid_search_results"
+    output_dir = f"{args.output_dir}/{model_name_short}_grid_search_results"
     # Example usage with options:
     # dpo_dataset = load_dpo_dataset(dataset_path, max_examples=150, example_source=[1, 2, 3])  # Load 50 rows from each source (300 total examples)
     # dpo_dataset = load_dpo_dataset(dataset_path, max_examples=50, example_source=[1, 2])  # Load 25 rows from each source (100 total examples)
@@ -316,7 +324,7 @@ if __name__ == "__main__":
     dataset_params = f"max_examples_{max_examples if max_examples is not None else 'all'}"
     if example_source is not None:
         dataset_params += f"_sources_{'-'.join(map(str, example_source))}"
-    final_model_dir = f"./{model_name_short}-dpo-{dataset_params}-{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    final_model_dir = f"{args.output_dir}/{model_name_short}-dpo-{dataset_params}-{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     
     # Merge LoRA weights with base model
     print("Merging LoRA adapter with base model...")
