@@ -4,7 +4,7 @@ This repository contains the implementation and resources for the paper: **"Miti
 
 This repository contains research on gender bias in language models, including bias detection, mitigation techniques, and evaluation across multiple benchmarks.
 
-![Introduction Figure](gender_bias_intro.png)
+![Introduction Figure](gender_bias_intro_trimmed.png)
 
 ## Project Structure
 
