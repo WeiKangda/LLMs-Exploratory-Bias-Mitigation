@@ -46,6 +46,10 @@ cd GenderBias
 pip install -r requirements.txt
 ```
 
+3. **Important**: If you plan to use the Slurm scripts, you'll need to:
+   - Get a Hugging Face access token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   - Replace `YOUR_HUGGINGFACE_TOKEN_HERE` in the slurm script files with your actual token
+
 ## Usage
 
 ### Story Generation
