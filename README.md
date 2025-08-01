@@ -1,26 +1,54 @@
 # Gender Bias in Language Models Research
 
+[![arXiv](https://img.shields.io/badge/arXiv-2505.17217-b31b1b.svg)](https://arxiv.org/abs/2505.17217)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Transformers-orange.svg)](https://huggingface.co/)
+
 This repository contains the implementation and resources for the paper: **"Mitigating Gender Bias via Fostering Exploratory Thinking in LLMs"** ([arXiv:2505.17217](https://arxiv.org/abs/2505.17217)).
 
 This repository contains research on gender bias in language models, including bias detection, mitigation techniques, and evaluation across multiple benchmarks.
 
 ![Introduction Figure](gender_bias_intro.png)
 
-## Project Structure
+## 📋 Table of Contents
+
+- [Project Overview](#project-overview)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Data](#data)
+- [Story Generation](#story-generation)
+- [Bias Mitigation](#bias-mitigation)
+- [Benchmark Evaluation](#benchmark-evaluation)
+- [Citation](#citation)
+- [License](#license)
+- [Contributing](#contributing)
+- [Contact](#contact)
+
+## 🎯 Project Overview
+
+This research focuses on mitigating gender bias in language models through exploratory thinking techniques. The project includes:
+
+- **Story Generation Pipeline**: Multi-step process for generating gender-balanced narratives
+- **Bias Mitigation Techniques**: DPO, fine-tuning, and Counterfactual Data Augmentation (CDA)
+- **Comprehensive Evaluation**: Multiple benchmarks including WinoBias, MMLU, TruthfulQA, BBQ, and GenMO
+
+## 📁 Project Structure
 
 ```
-├── Benchmarks/           # Evaluation benchmarks
-│   ├── BBQ/             # BBQ benchmark for bias evaluation
-│   ├── GenMO/           # GenMO moral reasoning dataset
-│   ├── MMLU/            # Massive Multitask Language Understanding
-│   ├── TruthfulQA/      # TruthfulQA benchmark
-│   └── WinoBias/        # WinoBias benchmark
-├── GenderBiasMitigation/ # Bias mitigation techniques
-│   ├── dpo.py           # Direct Preference Optimization
-│   ├── fine_tune.py     # Standard fine-tuning
-│   ├── fine_tune_cda.py # Counterfactual Data Augmentation
+├── 📊 Benchmarks/           # Evaluation benchmarks
+│   ├── BBQ/                # BBQ benchmark for bias evaluation
+│   ├── GenMO/              # GenMO moral reasoning dataset
+│   ├── MMLU/               # Massive Multitask Language Understanding
+│   ├── TruthfulQA/         # TruthfulQA benchmark
+│   └── WinoBias/           # WinoBias benchmark
+├── 🔧 GenderBiasMitigation/ # Bias mitigation techniques
+│   ├── dpo.py              # Direct Preference Optimization
+│   ├── fine_tune.py        # Standard fine-tuning
+│   ├── fine_tune_cda.py    # Counterfactual Data Augmentation
 │   └── resolution_analysis.py
-├── StoryGeneration/     # Story generation and analysis
+├── 📚 StoryGeneration/     # Story generation and analysis
 │   ├── story_generation.py      # Combined script for Llama and Mistral models
 │   ├── moral_stance_update.py   # Combined script for moral stance updates
 │   ├── swap_and_rewrite_explanations.py
@@ -32,74 +60,101 @@ This repository contains research on gender bias in language models, including b
 │   ├── generated_data_mistral.jsonl
 │   ├── swapped_explanations_llama.jsonl
 │   └── swapped_explanations_mistral.jsonl
-└── script/              # Slurm scripts for HPC
+└── ⚙️ script/              # Slurm scripts for HPC
 ```
 
-## Installation
+## 🚀 Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/WeiKangda/LLMs-Exploratory-Bias-Mitigation.git
-cd LLMs-Exploratory-Bias-Mitigation
-```
+### Prerequisites
 
-2. Create and activate a virtual environment:
-```bash
-# Using venv (recommended)
-python -m venv genderbias_env
-source genderbias_env/bin/activate  # On macOS/Linux
-# or
-genderbias_env\Scripts\activate     # On Windows
+- Python 3.9 or higher
+- Git
+- Hugging Face account (for model access)
 
-# Alternative: Using conda
-conda create -n genderbias_env python=3.9
-conda activate genderbias_env
-```
+### Step-by-Step Setup
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/WeiKangda/LLMs-Exploratory-Bias-Mitigation.git
+   cd LLMs-Exploratory-Bias-Mitigation
+   ```
 
-4. **Important**: If you plan to use the Slurm scripts, you'll need to:
+2. **Create and activate a virtual environment:**
+   ```bash
+   # Using venv (recommended)
+   python -m venv genderbias_env
+   source genderbias_env/bin/activate  # On macOS/Linux
+   # or
+   genderbias_env\Scripts\activate     # On Windows
+
+   # Alternative: Using conda
+   conda create -n genderbias_env python=3.9
+   conda activate genderbias_env
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure Hugging Face token (for Slurm scripts):**
    - Get a Hugging Face access token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
    - Replace `YOUR_HUGGINGFACE_TOKEN_HERE` in the slurm script files with your actual token
 
-## Usage
+## ⚡ Quick Start
 
-## Data
+### Basic Usage
 
-This repository includes the following data files that were used for training the models in the experiments reported in the paper:
+```bash
+# 1. Generate stories using the complete pipeline
+python StoryGeneration/story_generation.py --model llama --num_stories 50
+python StoryGeneration/filter.py --model llama
+python StoryGeneration/moral_stance_update.py --model llama
 
-- `StoryGeneration/generated_data_llama.jsonl` - Generated stories for Llama model (used in paper experiments)
-- `StoryGeneration/generated_data_mistral.jsonl` - Generated stories for Mistral model (used in paper experiments)
-- `StoryGeneration/swapped_explanations_llama.jsonl` - Swapped explanations for CDA (Counterfactual Data Augmentation) experiments (Llama model)
-- `StoryGeneration/swapped_explanations_mistral.jsonl` - Swapped explanations for CDA experiments (Mistral model)
+# 2. Run bias mitigation experiments
+python GenderBiasMitigation/fine_tune.py --model_name llama --output_dir ./results
 
-**Usage Options:**
+# 3. Evaluate on benchmarks
+python Benchmarks/WinoBias/winobias_benchmark.py --model_name llama
+```
 
-1. **Direct Use**: You can directly use these datasets to reproduce the exact experiments reported in the paper. These are the same training data that produced the results in our research.
+## 📊 Data
 
-2. **Generate New Data**: If you want to generate more data or create bias mitigation datasets for a new model, you can use the story generation pipeline (More details provided in the STory Generation section):
-   ```bash
-   # Generate new stories for your model
-   python StoryGeneration/story_generation.py --model <your_model_name> --num_stories <desired_count>
-   
-   # Filter and process the generated stories
-   python StoryGeneration/filter.py --model <your_model_name>
-   python StoryGeneration/moral_stance_update.py --model <your_model_name>
-   
-   # Generate counterfactual data for CDA experiments
-   python StoryGeneration/swap_and_rewrite_explanations.py --model <your_model_name>
-   ```
+This repository includes pre-generated data files used in the paper experiments:
 
-The provided datasets ensure reproducibility of our paper's results while the generation scripts enable extension to new models and larger datasets.
+| File | Description | Model |
+|------|-------------|-------|
+| `StoryGeneration/generated_data_llama.jsonl` | Generated stories for Llama model | Llama |
+| `StoryGeneration/generated_data_mistral.jsonl` | Generated stories for Mistral model | Mistral |
+| `StoryGeneration/swapped_explanations_llama.jsonl` | Swapped explanations for CDA experiments | Llama |
+| `StoryGeneration/swapped_explanations_mistral.jsonl` | Swapped explanations for CDA experiments | Mistral |
 
-### Story Generation
+### Usage Options
+
+#### 🎯 Direct Use
+Use the provided datasets to reproduce the exact experiments reported in the paper.
+
+#### 🔄 Generate New Data
+Create bias mitigation datasets for new models:
+
+```bash
+# Generate new stories for your model
+python StoryGeneration/story_generation.py --model <your_model_name> --num_stories <desired_count>
+
+# Filter and process the generated stories
+python StoryGeneration/filter.py --model <your_model_name>
+python StoryGeneration/moral_stance_update.py --model <your_model_name>
+
+# Generate counterfactual data for CDA experiments
+python StoryGeneration/swap_and_rewrite_explanations.py --model <your_model_name>
+```
+
+## 📚 Story Generation
 
 The story generation process consists of three sequential steps:
 
-#### Step 1: Generate Stories
+### Step 1: Generate Stories
+
 ```bash
 # Use Llama model (default)
 python StoryGeneration/story_generation.py
@@ -116,19 +171,23 @@ python StoryGeneration/story_generation.py --model llama --cache_dir ./my_models
 # Enable debug output
 python StoryGeneration/story_generation.py --model mistral --debug
 
-# Generate stories without character names (Not Recommended. Results reported in paper used pormpts include character names to avoid hallucination. )
+# ⚠️ Generate stories without character names (Not Recommended)
+# Results reported in paper used prompts including character names to avoid hallucination
 python StoryGeneration/story_generation.py --model llama --with_character False
 ```
 
 **Command Line Arguments:**
-- `--model`: Model to use (choices: 'llama', 'mistral', default: 'llama')
-- `--num_stories`: Number of stories to generate (default: 50)
-- `--with_character`: Generate stories with character names (default: True)
-- `--debug`: Print debug information (default: False)
-- `--cache_dir`: Directory to cache models (default: './models')
-- `--output_dir`: Directory for output files (default: './StoryGeneration')
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model` | Model to use | `llama` | `llama`, `mistral` |
+| `--num_stories` | Number of stories to generate | `50` | Any integer |
+| `--with_character` | Generate stories with character names | `True` | `True`, `False` |
+| `--debug` | Print debug information | `False` | `True`, `False` |
+| `--cache_dir` | Directory to cache models | `./models` | Any path |
+| `--output_dir` | Directory for output files | `./StoryGeneration` | Any path |
 
-#### Step 2: Filter Stories
+### Step 2: Filter Stories
+
 ```bash
 # Filter stories for Llama model (default)
 python StoryGeneration/filter.py
@@ -144,14 +203,17 @@ python StoryGeneration/filter.py --model mistral --rouge1_lower 0.7 --rouge1_upp
 ```
 
 **Command Line Arguments:**
-- `--model`: Dataset generated by which model for filtering (choices: 'llama', 'mistral', default: 'llama')
-- `--input_file`: Input file path (default: model-specific)
-- `--output_file`: Output file path (default: model-specific)
-- `--rouge1_lower`: Lower threshold for ROUGE-1 score (default: 0.8)
-- `--rouge1_upper`: Upper threshold for ROUGE-1 score (default: 0.95)
-- `--debug`: Print debug information (default: False)
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model` | Dataset generated by which model for filtering | `llama` | `llama`, `mistral` |
+| `--input_file` | Input file path | Model-specific | Any path |
+| `--output_file` | Output file path | Model-specific | Any path |
+| `--rouge1_lower` | Lower threshold for ROUGE-1 score | `0.8` | Float 0-1 |
+| `--rouge1_upper` | Upper threshold for ROUGE-1 score | `0.95` | Float 0-1 |
+| `--debug` | Print debug information | `False` | `True`, `False` |
 
-#### Step 3: Update Moral Stances
+### Step 3: Update Moral Stances
+
 ```bash
 # Update moral stances for Llama model (default)
 python StoryGeneration/moral_stance_update.py
@@ -167,14 +229,17 @@ python StoryGeneration/moral_stance_update.py --model mistral --temperature 0.5 
 ```
 
 **Command Line Arguments:**
-- `--model`: Model to use (choices: 'llama', 'mistral', default: 'llama')
-- `--cache_dir`: Directory to cache models (default: './models')
-- `--input_file`: Input file path (default: model-specific)
-- `--output_file`: Output file path (default: model-specific)
-- `--temperature`: Temperature for generation (default: 0.7)
-- `--debug`: Print debug information (default: False)
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model` | Model to use | `llama` | `llama`, `mistral` |
+| `--cache_dir` | Directory to cache models | `./models` | Any path |
+| `--input_file` | Input file path | Model-specific | Any path |
+| `--output_file` | Output file path | Model-specific | Any path |
+| `--temperature` | Temperature for generation | `0.7` | Float 0-2 |
+| `--debug` | Print debug information | `False` | `True`, `False` |
 
-#### Complete Pipeline Example
+### Complete Pipeline Example
+
 ```bash
 # Complete pipeline for Llama model
 python StoryGeneration/story_generation.py --model llama --num_stories 50
@@ -187,9 +252,9 @@ python StoryGeneration/filter.py --model mistral
 python StoryGeneration/moral_stance_update.py --model mistral
 ```
 
-#### Swap and Rewrite Explanations (CDA Experiments)
+### Swap and Rewrite Explanations (CDA Experiments)
 
-**Note**: For fair comparison in CDA experiments, this script should be run on files generated with the complete 3-step story generation pipeline (story generation → filtering → moral stance update).
+> **⚠️ Important Note**: For fair comparison in CDA experiments, this script should be run on files generated with the complete 3-step story generation pipeline (story generation → filtering → moral stance update).
 
 ```bash
 # Generate counterfactual data for CDA (Counterfactual Data Augmentation) experiments
@@ -197,6 +262,7 @@ python StoryGeneration/swap_and_rewrite_explanations.py --input_file <input_file
 ```
 
 This script performs counterfactual data augmentation by:
+
 1. **Loading story pairs** with male/female protagonists and their moral explanations
 2. **Swapping explanations** between male and female stories
 3. **Rewriting explanations** using Llama 3.1 to match character names and pronouns in the target story
@@ -204,13 +270,15 @@ This script performs counterfactual data augmentation by:
 5. **Saving results** with checkpointing for resuming interrupted runs
 
 **Command Line Arguments:**
-- `--model`: Model to use (choices: 'llama', 'mistral', default: 'mistral')
-- `--input_file`: Input file path (default: model-specific)
-- `--output_file`: Output file path (default: model-specific)
-- `--checkpoint_file`: Checkpoint file path for resuming (default: model-specific)
-- `--cache_dir`: Directory to cache models (default: './models')
-- `--checkpoint_interval`: Save checkpoint every N items (default: 10)
-- `--temperature`: Temperature for LLM generation (default: 0.7)
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model` | Model to use | `mistral` | `llama`, `mistral` |
+| `--input_file` | Input file path | Model-specific | Any path |
+| `--output_file` | Output file path | Model-specific | Any path |
+| `--checkpoint_file` | Checkpoint file path for resuming | Model-specific | Any path |
+| `--cache_dir` | Directory to cache models | `./models` | Any path |
+| `--checkpoint_interval` | Save checkpoint every N items | `10` | Any integer |
+| `--temperature` | Temperature for LLM generation | `0.7` | Float 0-2 |
 
 **Usage Examples:**
 ```bash
@@ -235,56 +303,65 @@ The script creates counterfactual data where:
 - Swapping source is tracked as `swapped_from`
 - Processing status and errors are logged
 
-#### Calculate Story Similarity
+### Calculate Story Similarity
+
 ```bash
 python StoryGeneration/calculate_story_similarity.py --input_file <input_file>
 ```
 
-### Bias Mitigation
+## 🔧 Bias Mitigation
 
-#### Direct Preference Optimization (DPO)
+### Direct Preference Optimization (DPO)
+
 ```bash
 python GenderBiasMitigation/dpo.py --model_name <model_name> --output_dir <output_dir>
 ```
 
-#### Fine-tuning
+### Fine-tuning
+
 ```bash
 python GenderBiasMitigation/fine_tune.py --model_name <model_name> --output_dir <output_dir>
 ```
 
-#### Counterfactual Data Augmentation (CDA)
+### Counterfactual Data Augmentation (CDA)
+
 ```bash
 python GenderBiasMitigation/fine_tune_cda.py --model_name <model_name> --output_dir <output_dir>
 ```
 
-### Benchmark Evaluation
+## 📊 Benchmark Evaluation
 
-#### WinoBias
+### WinoBias
+
 ```bash
 python Benchmarks/WinoBias/winobias_benchmark.py --model_name <model_name>
 ```
 
-#### MMLU
+### MMLU
+
 ```bash
 python Benchmarks/MMLU/mmlu_benchmark.py --model_name <model_name>
 ```
 
-#### TruthfulQA
+### TruthfulQA
+
 ```bash
 python Benchmarks/TruthfulQA/truthfulqa_benchmark.py --model_name <model_name>
 ```
 
-#### BBQ
+### BBQ
+
 ```bash
 python Benchmarks/BBQ/bbq_benchmark.py --model_name <model_name>
 ```
 
-#### GenMO
+### GenMO
+
 ```bash
 python Benchmarks/GenMO/evaluate_genmo.py --model_name <model_name>
 ```
 
-## Citation
+## 📖 Citation
 
 If you use this code in your research, please cite:
 
@@ -300,18 +377,32 @@ If you use this code in your research, please cite:
 }
 ```
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing
+## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+We welcome contributions! Please follow these steps:
 
-## Contact
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Make** your changes
+4. **Add** tests if applicable
+5. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
+6. **Push** to the branch (`git push origin feature/amazing-feature`)
+7. **Open** a Pull Request
 
-For questions or issues, please open an issue on GitHub or contact the authors at kangda@tamu.edu. 
+## 📞 Contact
+
+- **GitHub Issues**: [Open an issue](https://github.com/WeiKangda/LLMs-Exploratory-Bias-Mitigation/issues)
+- **Email**: kangda@tamu.edu
+- **Paper**: [arXiv:2505.17217](https://arxiv.org/abs/2505.17217)
+
+---
+
+<div align="center">
+
+**⭐ If you find this repository helpful, please give it a star! ⭐**
+
+</div> 
