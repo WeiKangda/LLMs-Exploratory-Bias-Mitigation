@@ -514,7 +514,6 @@ finetune_cda_results/
 | **DPO** | Preference Learning | Preference pairs | Learns to prefer neutral over biased | When you want explicit preference learning |
 | **Fine-tuning** | Supervised Learning | Input-output pairs | Simple and effective | Standard supervised learning approach |
 | **CDA** | Supervised Learning | Original + Counterfactual | Enhanced data diversity | When you want to leverage counterfactual reasoning |
-```
 
 ## 📊 Benchmark Evaluation
 This section conatins the five evaluation datasets we reported in our paper.
