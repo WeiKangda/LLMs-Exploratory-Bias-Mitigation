@@ -30,8 +30,8 @@ This repository contains research on gender bias in language models, including b
 
 This research focuses on mitigating gender bias in language models through exploratory thinking techniques. The project includes:
 
-- **Story Generation Pipeline**: Multi-step process for generating gender-balanced narratives
-- **Bias Mitigation Techniques**: DPO, fine-tuning, and Counterfactual Data Augmentation (CDA)
+- **Story Generation Pipeline**: Multi-step process for generating gender-balanced narratives, and Counterfactual Data Augmentation (CDA)
+- **Bias Mitigation Techniques**: DPO, fine-tuning
 - **Comprehensive Evaluation**: Multiple benchmarks including WinoBias, MMLU, TruthfulQA, BBQ, and GenMO
 
 ## 📁 Project Structure
@@ -46,7 +46,7 @@ This research focuses on mitigating gender bias in language models through explo
 ├── 🔧 GenderBiasMitigation/ # Bias mitigation techniques
 │   ├── dpo.py              # Direct Preference Optimization
 │   ├── fine_tune.py        # Standard fine-tuning
-│   ├── fine_tune_cda.py    # Counterfactual Data Augmentation
+│   ├── fine_tune_cda.py    # Fine-tuning with Counterfactual Data Augmentation
 │   └── resolution_analysis.py
 ├── 📚 StoryGeneration/     # Story generation and analysis
 │   ├── story_generation.py      # Combined script for Llama and Mistral models
@@ -254,7 +254,7 @@ python StoryGeneration/moral_stance_update.py --model mistral
 
 ### Swap and Rewrite Explanations (CDA Experiments)
 
-> **⚠️ Important Note**: For fair comparison in CDA experiments, this script should be run on files generated with the complete 3-step story generation pipeline (story generation → filtering → moral stance update).
+> **⚠️ Important Note**: For fair comparison between CDA and our bias mitigation method, this script should be run on files generated with the complete 3-step story generation pipeline (story generation → filtering → moral stance update).
 
 ```bash
 # Generate counterfactual data for CDA (Counterfactual Data Augmentation) experiments
@@ -311,22 +311,209 @@ python StoryGeneration/calculate_story_similarity.py --input_file <input_file>
 
 ## 🔧 Bias Mitigation
 
+This section provides detailed documentation for the bias mitigation scripts implemented in this repository.
+
 ### Direct Preference Optimization (DPO)
 
+**File**: `GenderBiasMitigation/dpo.py`
+
+**Description**: Implements Direct Preference Optimization (DPO) training for gender bias mitigation. DPO trains models to prefer neutral explanations over gender-biased ones by learning from preference pairs.
+
+**Command Line Arguments**:
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model_name` | Model to use for training | `meta-llama/Llama-3.1-8B-Instruct` | Any Hugging Face model |
+| `--max_examples` | Maximum number of examples to use | `125` | Any integer |
+| `--cache_dir` | Directory to cache models | `./models` | Any path |
+| `--dataset_path` | Path to dataset file | Auto-determined | Any path |
+| `--output_dir` | Output directory for results | `./dpo_results` | Any path |
+
+**Usage Examples**:
 ```bash
-python GenderBiasMitigation/dpo.py --model_name <model_name> --output_dir <output_dir>
+# Basic DPO training with default settings
+python GenderBiasMitigation/dpo.py --model_name meta-llama/Llama-3.1-8B-Instruct
+
+# DPO training with custom dataset and more examples
+python GenderBiasMitigation/dpo.py --model_name mistralai/Mistral-7B-Instruct-v0.3 --max_examples 250 --output_dir ./my_dpo_results
+
+# DPO training with custom dataset path
+python GenderBiasMitigation/dpo.py --model_name meta-llama/Llama-3.1-8B-Instruct --dataset_path ./custom_data.jsonl
 ```
 
-### Fine-tuning
+**Grid Search Parameters**:
+| Parameter | Values Tested | Description |
+|-----------|---------------|-------------|
+| `beta` | `[1.0]` | DPO temperature parameter |
+| `batch_size` | `[4]` | Training batch size |
+| `gradient_accumulation_steps` | `[4]` | Gradient accumulation steps |
+| `num_epochs` | `[3]` | Number of training epochs |
+| `learning_rate` | `[1e-5]` | Learning rate |
 
+**Output Structure**:
+```
+dpo_results/
+├── {model_name}_grid_search_results/
+│   ├── {model_name}_grid_search_{timestamp}/
+│   │   ├── param_grid.json              # Parameter grid configuration
+│   │   ├── best_config.json             # Best configuration found
+│   │   ├── run_0_beta=1.0_batch_size=4_.../
+│   │   │   ├── config.json              # Configuration for this run
+│   │   │   ├── metrics.json             # Training metrics
+│   │   │   └── checkpoint-{step}/       # Model checkpoints
+│   │   └── ...
+└── {model_name}-dpo-{params}-{timestamp}/
+    ├── config.json                      # Model configuration
+    ├── pytorch_model.bin                # Merged model weights
+    ├── tokenizer.json                   # Tokenizer configuration
+    └── best_config.json                 # Best training configuration
+```
+
+### Standard Fine-tuning
+
+**File**: `GenderBiasMitigation/fine_tune.py`
+
+**Description**: Implements standard supervised fine-tuning for gender bias mitigation using neutral explanations as training targets.
+
+**Command Line Arguments**:
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model_name` | Model to use for training | `mistralai/Mistral-7B-Instruct-v0.3` | Any Hugging Face model |
+| `--cache_dir` | Directory to cache models | `./models` | Any path |
+| `--dataset_path` | Path to dataset file | Auto-determined | Any path |
+| `--output_dir` | Output directory for results | `./finetune_results` | Any path |
+| `--max_examples` | Maximum number of examples to use | `5000` | Any integer |
+| `--example_source` | Example sources to use | `[0]` | List of integers |
+
+**Usage Examples**:
 ```bash
-python GenderBiasMitigation/fine_tune.py --model_name <model_name> --output_dir <output_dir>
+# Basic fine-tuning with default settings
+python GenderBiasMitigation/fine_tune.py --model_name mistralai/Mistral-7B-Instruct-v0.3
+
+# Fine-tuning with custom parameters
+python GenderBiasMitigation/fine_tune.py --model_name meta-llama/Llama-3.1-8B-Instruct --max_examples 1000 --output_dir ./my_finetune_results
+
+# Fine-tuning with specific data sources
+python GenderBiasMitigation/fine_tune.py --model_name mistralai/Mistral-7B-Instruct-v0.3 --example_source 0 1 2
+```
+
+**Training Configuration**:
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `per_device_train_batch_size` | `2` | Batch size per device |
+| `gradient_accumulation_steps` | `8` | Gradient accumulation steps |
+| `num_train_epochs` | `1` | Number of training epochs |
+| `learning_rate` | `2e-4` | Learning rate |
+| `warmup_steps` | `100` | Warmup steps |
+| `max_length` | `512` | Maximum sequence length |
+| `save_steps` | `500` | Save checkpoint every N steps |
+
+**LoRA Configuration**:
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `r` | `64` | LoRA rank |
+| `lora_alpha` | `16` | LoRA alpha parameter |
+| `target_modules` | `["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]` | Target modules for LoRA |
+| `lora_dropout` | `0.05` | LoRA dropout rate |
+| `bias` | `"none"` | Bias handling strategy |
+
+**Output Structure**:
+```
+finetune_results/
+├── {model_name}-lora-finetuned-{params}/
+│   ├── config.json                      # Model configuration
+│   ├── pytorch_model.bin                # LoRA weights
+│   ├── adapter_config.json              # LoRA adapter configuration
+│   └── training_args.bin                # Training arguments
+├── {model_name}-finetuned-{params}/
+│   ├── config.json                      # Merged model configuration
+│   ├── pytorch_model.bin                # Merged model weights
+│   ├── tokenizer.json                   # Tokenizer configuration
+│   └── dataset_params.json              # Dataset parameters used
+└── logs/
+    └── {model_name}-{params}/
+        └── events.out.tfevents.*        # Training logs
 ```
 
 ### Counterfactual Data Augmentation (CDA)
 
+**File**: `GenderBiasMitigation/fine_tune_cda.py`
+
+**Description**: Implements fine-tuning with Counterfactual Data Augmentation (CDA) for gender bias mitigation. This technique uses both original and counterfactual explanations to train models.
+
+**Command Line Arguments**:
+| Argument | Description | Default | Choices |
+|----------|-------------|---------|---------|
+| `--model_name` | Model to use for training | `mistralai/Mistral-7B-Instruct-v0.3` | Any Hugging Face model |
+| `--cache_dir` | Directory to cache models | `./models` | Any path |
+| `--dataset_path` | Path to dataset file | Auto-determined | Any path |
+| `--output_dir` | Output directory for results | `./finetune_cda_results` | Any path |
+| `--max_examples` | Maximum number of examples to use | `5000` | Any integer |
+| `--example_source` | Example sources to use | `[0]` | List of integers |
+
+**Usage Examples**:
 ```bash
-python GenderBiasMitigation/fine_tune_cda.py --model_name <model_name> --output_dir <output_dir>
+# Basic CDA fine-tuning with default settings
+python GenderBiasMitigation/fine_tune_cda.py --model_name mistralai/Mistral-7B-Instruct-v0.3
+
+# CDA fine-tuning with custom parameters
+python GenderBiasMitigation/fine_tune_cda.py --model_name meta-llama/Llama-3.1-8B-Instruct --max_examples 1000 --output_dir ./my_cda_results
+
+# CDA fine-tuning with specific data sources
+python GenderBiasMitigation/fine_tune_cda.py --model_name mistralai/Mistral-7B-Instruct-v0.3 --example_source 0 1 2
+```
+
+**Training Configuration**:
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `per_device_train_batch_size` | `2` | Batch size per device |
+| `gradient_accumulation_steps` | `8` | Gradient accumulation steps |
+| `num_train_epochs` | `1` | Number of training epochs |
+| `learning_rate` | `2e-4` | Learning rate |
+| `warmup_steps` | `100` | Warmup steps |
+| `max_length` | `512` | Maximum sequence length |
+| `save_steps` | `500` | Save checkpoint every N steps |
+
+**LoRA Configuration**:
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `r` | `64` | LoRA rank |
+| `lora_alpha` | `16` | LoRA alpha parameter |
+| `target_modules` | `["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]` | Target modules for LoRA |
+| `lora_dropout` | `0.05` | LoRA dropout rate |
+| `bias` | `"none"` | Bias handling strategy |
+
+**Data Structure**:
+Each story generates 4 training examples:
+1. **Male + Original Explanation**: Male story with original male explanation
+2. **Male + Current Explanation**: Male story with swapped female explanation
+3. **Female + Original Explanation**: Female story with original female explanation
+4. **Female + Current Explanation**: Female story with swapped male explanation
+
+**Output Structure**:
+```
+finetune_cda_results/
+├── {model_name}-cda-lora-finetuned-{params}/
+│   ├── config.json                      # Model configuration
+│   ├── pytorch_model.bin                # LoRA weights
+│   ├── adapter_config.json              # LoRA adapter configuration
+│   └── training_args.bin                # Training arguments
+├── {model_name}-cda-finetuned-{params}/
+│   ├── config.json                      # Merged model configuration
+│   ├── pytorch_model.bin                # Merged model weights
+│   ├── tokenizer.json                   # Tokenizer configuration
+│   └── dataset_params.json              # Dataset parameters used
+└── logs/
+    └── {model_name}-{params}/
+        └── events.out.tfevents.*        # Training logs
+```
+
+### Comparison of Techniques
+
+| Technique | Training Method | Data Usage | Key Advantage | Best For |
+|-----------|----------------|------------|---------------|----------|
+| **DPO** | Preference Learning | Preference pairs | Learns to prefer neutral over biased | When you want explicit preference learning |
+| **Fine-tuning** | Supervised Learning | Input-output pairs | Simple and effective | Standard supervised learning approach |
+| **CDA** | Supervised Learning | Original + Counterfactual | Enhanced data diversity | When you want to leverage counterfactual reasoning |
 ```
 
 ## 📊 Benchmark Evaluation
