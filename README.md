@@ -188,6 +188,9 @@ python StoryGeneration/moral_stance_update.py --model mistral
 ```
 
 #### Swap and Rewrite Explanations (CDA Experiments)
+
+**Note**: For fair comparison in CDA experiments, this script should be run on files generated with the complete 3-step story generation pipeline (story generation → filtering → moral stance update).
+
 ```bash
 # Generate counterfactual data for CDA (Counterfactual Data Augmentation) experiments
 python StoryGeneration/swap_and_rewrite_explanations.py --input_file <input_file>
