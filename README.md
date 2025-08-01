@@ -516,7 +516,7 @@ finetune_cda_results/
 | **CDA** | Supervised Learning | Original + Counterfactual | Enhanced data diversity | When you want to leverage counterfactual reasoning |
 
 ## 📊 Benchmark Evaluation
-This section conatins the five evaluation datasets we reported in our paper.
+This section conatins the five evaluation datasets we reported in our paper. More details can be found in ./Benchmarks/{dataset_name}.
 
 ### WinoBias
 
