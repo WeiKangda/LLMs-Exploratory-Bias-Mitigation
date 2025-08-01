@@ -255,13 +255,31 @@ python Benchmarks/GenMO/evaluate_genmo.py --model_name <model_name>
 
 ## Data
 
-This repository includes the following data files:
-- `StoryGeneration/generated_data_llama.jsonl` - Generated stories for Llama model
-- `StoryGeneration/generated_data_mistral.jsonl` - Generated stories for Mistral model
-- `StoryGeneration/swapped_explanations_llama.jsonl` - Swapped explanations for CDA (Llama model)
-- `StoryGeneration/swapped_explanations_mistral.jsonl` - Swapped explanations for CDA (Mistral model)
+This repository includes the following data files that were used for training the models in the experiments reported in the paper:
 
-The data files contain the datasets used for gender bias mitigation experiments.
+- `StoryGeneration/generated_data_llama.jsonl` - Generated stories for Llama model (used in paper experiments)
+- `StoryGeneration/generated_data_mistral.jsonl` - Generated stories for Mistral model (used in paper experiments)
+- `StoryGeneration/swapped_explanations_llama.jsonl` - Swapped explanations for CDA (Counterfactual Data Augmentation) experiments (Llama model)
+- `StoryGeneration/swapped_explanations_mistral.jsonl` - Swapped explanations for CDA experiments (Mistral model)
+
+**Usage Options:**
+
+1. **Direct Use**: You can directly use these datasets to reproduce the exact experiments reported in the paper. These are the same training data that produced the results in our research.
+
+2. **Generate New Data**: If you want to generate more data or create bias mitigation datasets for a new model, you can use the story generation pipeline:
+   ```bash
+   # Generate new stories for your model
+   python StoryGeneration/story_generation.py --model <your_model_name> --num_stories <desired_count>
+   
+   # Filter and process the generated stories
+   python StoryGeneration/filter.py --model <your_model_name>
+   python StoryGeneration/moral_stance_update.py --model <your_model_name>
+   
+   # Generate counterfactual data for CDA experiments
+   python StoryGeneration/swap_and_rewrite_explanations.py --model <your_model_name>
+   ```
+
+The provided datasets ensure reproducibility of our paper's results while the generation scripts enable extension to new models and larger datasets.
 
 ## Citation
 
