@@ -517,6 +517,7 @@ finetune_cda_results/
 ```
 
 ## 📊 Benchmark Evaluation
+This section conatins the five evaluation datasets we reported in our paper.
 
 ### WinoBias
 
