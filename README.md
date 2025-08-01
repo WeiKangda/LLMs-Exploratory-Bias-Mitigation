@@ -256,12 +256,12 @@ python Benchmarks/GenMO/evaluate_genmo.py --model_name <model_name>
 ## Data
 
 This repository includes the following data files:
-- `StoryGeneration/generated_data.jsonl` - Generated stories with male protagonists
-- `StoryGeneration/generated_data_mistral.jsonl` - Generated stories with male protagonists (Mistral model)
-- `StoryGeneration/swapped_explanations.jsonl` - Swapped explanations for gender bias analysis
-- `StoryGeneration/swapped_explanations_mistral.jsonl` - Swapped explanations (Mistral model)
+- `StoryGeneration/generated_data_llama.jsonl` - Generated stories for Llama model
+- `StoryGeneration/generated_data_mistral.jsonl` - Generated stories for Mistral model
+- `StoryGeneration/swapped_explanations_llama.jsonl` - Swapped explanations for CDA (Llama model)
+- `StoryGeneration/swapped_explanations_mistral.jsonl` - Swapped explanations for CDA (Mistral model)
 
-The data files contain the research datasets used for gender bias analysis and story generation experiments.
+The data files contain the datasets used for gender bias mitigation experiments.
 
 ## Citation
 
