@@ -1,6 +1,6 @@
 # GenMO
 
-GenMO contains 908 short pairs of stories centered on morality having a male and a female protagonist performing some action. Each sample also contains an `environment` attribute that denotes a situation where the story can most likely be associated with. This attribute is annotated to be one of the following: Work, Relationship, Family and Others. Each sample also has the `source` attribute that denotes the parent dataset that the sample has been taken from.
+GenMO [https://aclanthology.org/2024.findings-emnlp.928/] contains 908 short pairs of stories centered on morality having a male and a female protagonist performing some action. Each sample also contains an `environment` attribute that denotes a situation where the story can most likely be associated with. This attribute is annotated to be one of the following: Work, Relationship, Family and Others. Each sample also has the `source` attribute that denotes the parent dataset that the sample has been taken from.
 
 ## Evaluation Scripts
 
@@ -11,10 +11,10 @@ This script evaluates models on the GenMO dataset using few-shot learning with i
 **Command Line Arguments:**
 | Argument | Description | Default | Choices |
 |----------|-------------|---------|---------|
-| `--model_name` | Model name to evaluate | `google/gemma-2-9b-it` | Any Hugging Face model |
+| `--model_name` | Model name to evaluate | `meta-llama/Llama-3.1-8B-Instruct` | Any Hugging Face model |
 | `--shot_number` | Number of few-shot examples to use | `1` | Any integer |
 | `--dataset_path` | Path to GenMO dataset JSON file | `GenMO_dataset.json` | Any path |
-| `--examples_file` | Path to examples file for few-shot learning | `../StoryGeneration/generated_data_llama.jsonl` | Any path |
+| `--examples_file` | Path to examples file for few-shot learning | `./StoryGeneration/generated_data_llama.jsonl` | Any path |
 | `--output_dir` | Directory to save results | `./results` | Any path |
 | `--cache_dir` | Directory to cache models | `./models` | Any path |
 | `--batch_size` | Batch size for evaluation | `8` | Any integer |
