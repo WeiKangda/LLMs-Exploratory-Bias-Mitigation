@@ -545,7 +545,14 @@ python Benchmarks/BBQ/bbq_benchmark.py --model_name <model_name>
 ### GenMO
 
 ```bash
+# Standard evaluation
 python Benchmarks/GenMO/evaluate_genmo.py --model_name <model_name>
+
+# Few-shot learning evaluation with in-context examples
+python Benchmarks/GenMO/evaluate_genmo_icl.py --model_name <model_name> --shot_number <number>
+
+# Examples:
+python Benchmarks/GenMO/evaluate_genmo_icl.py --model_name mistralai/Mistral-7B-Instruct-v0.3 --shot_number 2
 ```
 
 ## 📖 Citation

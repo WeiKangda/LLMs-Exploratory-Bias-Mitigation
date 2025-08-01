@@ -18,8 +18,5 @@ conda activate genderbias_env
 # Login to Hugging Face
 huggingface-cli login --token YOUR_HUGGINGFACE_TOKEN_HERE
 
-# Navigate to project directory
-cd /scratch/user/u.kw178339/GenderBias
-
-# Run the MMLU benchmark
-CUDA_VISIBLE_DEVICES=0 python TruthfulQA/truthfulqa_benchmark.py
+# Run the TruthfulQA benchmark
+CUDA_VISIBLE_DEVICES=0 python Benchmarks/TruthfulQA/truthfulqa_benchmark.py

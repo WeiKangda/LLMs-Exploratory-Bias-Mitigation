@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
@@ -6,11 +7,27 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from datetime import datetime
 
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='TruthfulQA benchmark evaluation')
+    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-3.1-8B-Instruct',
+                       help='Model name to use for evaluation')
+    parser.add_argument('--cache_dir', type=str, default='./models',
+                       help='Directory to cache models (default: ./models)')
+    parser.add_argument('--output_dir', type=str, default='./results',
+                       help='Output directory for results (default: ./results)')
+    parser.add_argument('--batch_size', type=int, default=8,
+                       help='Batch size for evaluation (default: 8)')
+    parser.add_argument('--debug', action='store_true',
+                       help='Enable debug output')
+    return parser.parse_args()
+
 class TruthfulQAEvaluator:
-    def __init__(self, model_name, batch_size=8, cache_dir="/scratch/user/u.kw178339/huggingface_models"):
+    def __init__(self, model_name, batch_size=8, cache_dir="./models", debug=False):
         self.model_name = model_name
         self.cache_dir = cache_dir
         self.batch_size = batch_size
+        self.debug = debug
         
         # Initialize tokenizer and model
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -93,7 +110,7 @@ Answer with only the letter of the correct choice:"""
             prompts = [self.format_prompt(q, c) for q, c in zip(batch["question"], batch["choices"])]
             
             # Print first prompt for debugging
-            if batch_idx == 0:
+            if self.debug and batch_idx == 0:
                 print("\n=== Debug: Formatted Prompt Example ===")
                 print(prompts[0])
                 print("=====================================\n")
@@ -135,7 +152,7 @@ Answer with only the letter of the correct choice:"""
                 total += 1
                 
                 # Print first answer comparison for debugging
-                if total == 1:
+                if self.debug and total == 1:
                     print("\n=== Debug: Answer Comparison ===")
                     print(f"Raw output: {output}")
                     print(f"Processed response: {response}")
@@ -154,16 +171,18 @@ Answer with only the letter of the correct choice:"""
                 })
         
         accuracy = correct / total if total > 0 else 0
-        print(f"\n=== Debug: {mc_type} Summary ===")
-        print(f"Total questions: {total}")
-        print(f"Correct answers: {correct}")
-        print(f"Accuracy: {accuracy:.2%}")
+        if self.debug:
+            print(f"\n=== Debug: {mc_type} Summary ===")
+            print(f"Total questions: {total}")
+            print(f"Correct answers: {correct}")
+            print(f"Accuracy: {accuracy:.2%}")
         
         return accuracy, results
 
-    def run_benchmark(self):
+    def run_benchmark(self, output_dir="./results"):
         # Load TruthfulQA dataset
-        with open("TruthfulQA/mc_task.json", "r") as f:
+        dataset_path = "./Benchmarks/TruthfulQA/mc_task.json"
+        with open(dataset_path, "r") as f:
             dataset = json.load(f)
         
         # Create model-specific directories
@@ -174,8 +193,8 @@ Answer with only the letter of the correct choice:"""
             model_name_safe = model_name_safe[1:]
         model_name_safe = model_name_safe.replace('/', '_')
         
-        results_dir = os.path.join("truthfulqa_results", model_name_safe)
-        logs_dir = os.path.join("truthfulqa_logs", model_name_safe)
+        results_dir = os.path.join(output_dir, "truthfulqa_results", model_name_safe)
+        logs_dir = os.path.join(output_dir, "truthfulqa_logs", model_name_safe)
         os.makedirs(results_dir, exist_ok=True)
         os.makedirs(logs_dir, exist_ok=True)
         
@@ -217,12 +236,30 @@ Answer with only the letter of the correct choice:"""
                 "results": results
             }, f, indent=2)
         
+        print(f"\n=== TruthfulQA Results ===")
+        print(f"MC0 Accuracy: {mc0_accuracy:.2%}")
+        print(f"MC1 Accuracy: {mc1_accuracy:.2%}")
+        print(f"Results saved to: {output_file}")
+        print(f"Logs saved to: {log_file}")
+        
         return results
 
-if __name__ == "__main__":
-    # Initialize evaluator with your model
-    model_name = "Llama-3.1-8B-Instruct-finetuned-max_examples_1000_sources_0"
-    evaluator = TruthfulQAEvaluator(model_name, batch_size=8)
+def main():
+    """Main function to run the TruthfulQA benchmark."""
+    args = parse_args()
+    
+    # Initialize evaluator
+    evaluator = TruthfulQAEvaluator(
+        model_name=args.model_name,
+        batch_size=args.batch_size,
+        cache_dir=args.cache_dir,
+        debug=args.debug
+    )
     
     # Run benchmark
-    results = evaluator.run_benchmark() 
+    results = evaluator.run_benchmark(output_dir=args.output_dir)
+    
+    return results
+
+if __name__ == "__main__":
+    main() 

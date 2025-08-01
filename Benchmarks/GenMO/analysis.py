@@ -58,7 +58,7 @@ class Model:
 
 
 if __name__ == '__main__':
-    model_name = "llama-3.1-8b-instruct-dpo-best"
+    model_name = "meta-llama/Llama-3.1-8B-Instruct"
     model = Model(model_name)
 
     pred_mis, pred_mis_rate, diff_stances, diff_labels, labels = model.prediction_mismatch()

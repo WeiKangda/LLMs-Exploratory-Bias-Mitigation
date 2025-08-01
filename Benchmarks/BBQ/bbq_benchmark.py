@@ -1,5 +1,6 @@
 import json
 import os
+import argparse
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 import torch
 from tqdm import tqdm
@@ -7,8 +8,25 @@ from torch.utils.data import DataLoader
 from datetime import datetime
 import re
 
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='BBQ benchmark evaluation')
+    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-3.1-8B-Instruct',
+                       help='Model name to use for evaluation')
+    parser.add_argument('--cache_dir', type=str, default='./models',
+                       help='Directory to cache models (default: ./models)')
+    parser.add_argument('--data_dir', type=str, default='./Benchmarks/BBQ',
+                       help='Directory containing BBQ dataset files (default: ./BBQ)')
+    parser.add_argument('--output_dir', type=str, default='./results',
+                       help='Output directory for results (default: ./results)')
+    parser.add_argument('--batch_size', type=int, default=8,
+                       help='Batch size for evaluation (default: 8)')
+    parser.add_argument('--max_new_tokens', type=int, default=20,
+                       help='Maximum number of new tokens to generate (default: 20)')
+    return parser.parse_args()
+
 class BBQEvaluator:
-    def __init__(self, model_name, batch_size=8, cache_dir="/scratch/user/u.kw178339/huggingface_models"):
+    def __init__(self, model_name, batch_size=8, cache_dir="./models"):
         self.model_name = model_name
         self.cache_dir = cache_dir
         self.batch_size = batch_size
@@ -42,7 +60,7 @@ class BBQEvaluator:
         self.tokenizer.padding_side = 'left'
         self.model.config.pad_token_id = self.tokenizer.pad_token_id
 
-    def load_bbq_dataset(self, data_dir="BBQ"):
+    def load_bbq_dataset(self, data_dir="./Benchmarks/BBQ"):
         """Load BBQ dataset from JSONL files"""
         categories = [
             "Age", "Disability_status", "Gender_identity", "Nationality", 
@@ -112,7 +130,7 @@ Answer with only the letter of the correct choice:"""
                     return ord(char) - ord('A')
         return None
 
-    def evaluate_category(self, category, examples):
+    def evaluate_category(self, category, examples, max_new_tokens=20):
         """Evaluate model performance on a specific BBQ category"""
         print(f"\n=== Evaluating {category} ===")
         print(f"Number of examples: {len(examples)}")
@@ -155,7 +173,7 @@ Answer with only the letter of the correct choice:"""
             
             outputs = self.pipe(
                 messages_batch,
-                max_new_tokens=20,
+                max_new_tokens=max_new_tokens,
                 pad_token_id=self.tokenizer.pad_token_id,
                 temperature=0.0,
                 do_sample=False,
@@ -221,7 +239,7 @@ Answer with only the letter of the correct choice:"""
         
         return accuracy, results
 
-    def run_benchmark(self, data_dir="BBQ"):
+    def run_benchmark(self, data_dir="./Benchmarks/BBQ", output_dir="./results", max_new_tokens=20):
         """Run BBQ benchmark on all categories"""
         # Load BBQ dataset
         dataset = self.load_bbq_dataset(data_dir)
@@ -234,8 +252,8 @@ Answer with only the letter of the correct choice:"""
             model_name_safe = model_name_safe[1:]
         model_name_safe = model_name_safe.replace('/', '_')
         
-        results_dir = os.path.join("bbq_results", model_name_safe)
-        logs_dir = os.path.join("bbq_logs", model_name_safe)
+        results_dir = os.path.join(output_dir, "bbq_results", model_name_safe)
+        logs_dir = os.path.join(output_dir, "bbq_logs", model_name_safe)
         os.makedirs(results_dir, exist_ok=True)
         os.makedirs(logs_dir, exist_ok=True)
         
@@ -252,7 +270,7 @@ Answer with only the letter of the correct choice:"""
         
         for category in sorted(dataset.keys()):
             if category in dataset:
-                accuracy, category_results = self.evaluate_category(category, dataset[category])
+                accuracy, category_results = self.evaluate_category(category, dataset[category], max_new_tokens)
                 results[category] = {
                     "accuracy": float(accuracy),
                     "results": category_results,
@@ -289,10 +307,23 @@ Answer with only the letter of the correct choice:"""
         
         return results
 
-if __name__ == "__main__":
-    # Initialize evaluator with your model
-    model_name = "meta-llama/Llama-3.1-8B-Instruct"
-    evaluator = BBQEvaluator(model_name, batch_size=8)
+def main():
+    args = parse_args()
     
-    # Run benchmark on all BBQ categories
-    results = evaluator.run_benchmark(data_dir="BBQ") 
+    # Initialize evaluator
+    print(f"Initializing BBQ evaluator for model: {args.model_name}")
+    evaluator = BBQEvaluator(args.model_name, batch_size=args.batch_size, cache_dir=args.cache_dir)
+    
+    # Run benchmark
+    print("Running BBQ benchmark...")
+    results = evaluator.run_benchmark(
+        data_dir=args.data_dir, 
+        output_dir=args.output_dir,
+        max_new_tokens=args.max_new_tokens
+    )
+    
+    print("BBQ benchmark evaluation complete!")
+    print(f"Results saved to: {args.output_dir}")
+
+if __name__ == "__main__":
+    main() 
